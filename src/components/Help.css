@@ -1,0 +1,13 @@
+.Help {
+  text-align: left;
+  margin-left: 10em;
+  margin-right: 10em;
+}
+
+ul {
+  list-style-type: none;
+}
+
+li {
+  margin-bottom: 10px;
+}

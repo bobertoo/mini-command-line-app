@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Form from './Form';
+import Help from './Help';
 import './App.css';
 
 class App extends Component {
@@ -10,7 +11,7 @@ class App extends Component {
       fileSystem: {
         1: {name: '/', parent: null, children: [2]},
         2: {name: 'Volumes', parent: 1, children: [3]},
-        3: {name: 'Macintosh HD', parent: 2, children: [4]},
+        3: {name: 'Macintosh_HD', parent: 2, children: [4]},
         4: {name: 'Users', parent: 3, children: [5]},
         5: {name: 'vinny', parent: 4, children: [6]},
         6: {name: 'Desktop', parent: 5, children: [7, 8]},
@@ -45,7 +46,8 @@ class App extends Component {
 
   handleSubmit(e) {
     e.preventDefault();
-    this.operateOnInput(this.state.input)
+    this.operateOnInput(this.state.input);
+    this.setState({input: ''});
   }
 
   operateOnInput(input) {
@@ -58,7 +60,7 @@ class App extends Component {
         break;
       case 'cd':
         this.setState({
-          output: this.cd(input)
+          output: this.cd(input, this.state.currentDirectory, this.state.fileSystem)
         })
         break;
       case 'ls':
@@ -68,17 +70,17 @@ class App extends Component {
         break;
       case 'pwd':
         this.setState({
-          output: this.pwd(input)
+          output: this.pwd(input, this.state.currentDirectory, this.state.fileSystem)
         })
         break;
       case 'mkdir':
         this.setState({
-          output: this.mkdir(input, this.state.fileSystem)
+          output: this.mkdir(input, this.state.nextIndex, this.state.currentDirectory, this.state.fileSystem)
         })
         break;
       case 'touch':
         this.setState({
-          output: this.touch(input, this.state.fileSystem)
+          output: this.touch(input, this.state.nextIndex, this.state.currentDirectory, this.state.fileSystem)
         })
         break;
       case 'echo':
@@ -88,7 +90,7 @@ class App extends Component {
         break;
       case 'cat':
         this.setState({
-          output: this.cat(input, this.state.fileSystem)
+          output: this.cat(input, this.state.currentDirectory, this.state.fileSystem)
         })
         break;
       default:
@@ -103,72 +105,146 @@ class App extends Component {
   }
 
   help() {
-    return 'this is how you use this app';
+    return <Help />
   }
 
   ls(input, currentDirectory, fileSystem) {
-    if (fileSystem[currentDirectory]['children'].length !== 0) {
-      let output = fileSystem[currentDirectory]['children'].map((child) => {
-        let printChild = `${fileSystem[child]['name']} type=`;
-        fileSystem[child]['children'] ? printChild += 'directory' : printChild += 'file'
-        return printChild;
-      });
-      return output.join(' | ');
+    if (this.inputLength(input) !== 1) {
+      return 'invalid. this ls does not take arguments';
     }
     else {
-      return 'empty directory';
-    }
-  }
-
-  cd(input) {
-    if (this.inputLength(input) === 2) {
-      return 'you are now in this directory';
-    }
-    else {
-      return 'invalid';
-    }
-  }
-
-  pwd(input, path) {
-    if (this.inputLength(input) > 1) {
-      return 'invalid';
-    }
-    else {
-      if (path.length === 0) {
-        return '/';
+      if (fileSystem[currentDirectory]['children'].length !== 0) {
+        let output = fileSystem[currentDirectory]['children'].map((child) => {
+          let printChild = `${fileSystem[child]['name']}`;
+          fileSystem[child]['children'] ? printChild += '(directory)' : printChild += '(file)'
+          return printChild;
+        });
+        return output.join(' | ');
       }
       else {
-        return 'invalid';
+        return 'empty directory';
       }
     }
   }
 
-  mkdir(input, path, fileSystem) {
-    if (this.inputLength(input) > 2) {
+  cd(input, currentDirectory, fileSystem) {
+    if (this.inputLength(input) === 2) {
+      if (input.split(' ')[1] === '..') {
+        if (fileSystem[currentDirectory]['parent']) {
+          this.setState({currentDirectory: fileSystem[currentDirectory]['parent']});
+          return `you are now in ${fileSystem[fileSystem[currentDirectory]['parent']]['name']}`;
+        }
+        else {
+          return 'you are already in the root directory';
+        }
+      }
+      else {
+        let nextIndex = fileSystem[currentDirectory]['children'].findIndex((child) =>
+          fileSystem[child].name === input.split(' ')[1]
+        )
+        if (nextIndex > -1) {
+          let nextDirectory = fileSystem[currentDirectory]['children'][nextIndex]
+          if (fileSystem[nextDirectory].hasOwnProperty('children')) {
+            this.setState({currentDirectory: nextDirectory});
+            return `you are now in ${fileSystem[nextDirectory]['name']}`;
+          }
+          else {
+            return 'you can not cd into a file';
+          }
+        }
+        else {
+          return 'invalid option';
+        }
+      }
+    }
+    else {
+      return 'invalid amount of arguments';
+    }
+  }
+
+  pwd(input, currentDirectory, fileSystem) {
+    if (this.inputLength(input) === 1) {
+      let directoryId = currentDirectory;
+      let path = [fileSystem[directoryId]['name']];
+      while (fileSystem[directoryId]['parent']) {
+        path.unshift(fileSystem[fileSystem[directoryId]['parent']]['name']);
+        directoryId = fileSystem[directoryId]['parent'];
+      }
+      let result = path;
+      if (result.length > 1){
+        return `${result[0]}${result.slice(1).join('/')}`;
+      }
+      else {
+        return result[0];
+      }
+    }
+    else {
+      return 'invalid! this command doesn\'t take any arguments';
+    }
+  }
+
+  mkdir(input, nextIndex, currentDirectory, fileSystem) {
+    if (this.inputLength(input) !== 2 ) {
       return 'invalid! this mkdir only supports 1 argument.';
     }
     else {
       let argument = input.split(' ')[1];
-      if (path.length > 0) {
-        let directory = fileSystem;
-        let directoryArr = path.map((walkUp) => directory = directory[walkUp]);
-        directoryArr.forEach
-
+      let newDirectory = {};
+      let updateParent = {};
+      updateParent[currentDirectory] = {
+        ...fileSystem[currentDirectory],
+        children: [...fileSystem[currentDirectory]['children'], nextIndex]
       }
-      return 'mkdir';
+      newDirectory[nextIndex] = {name: argument, parent: currentDirectory, children: []};
+      this.setState({
+        fileSystem: {...fileSystem, ...newDirectory, ...updateParent },
+        nextIndex: nextIndex + 1
+      })
+      return `created new directory called ${argument}`;
     }
   }
 
-  touch() {
-    return 'touch';
+  touch(input, nextIndex, currentDirectory, fileSystem) {
+    if (this.inputLength(input) !== 2 ) {
+      return 'invalid! this mkdir only supports 1 argument.';
+    }
+    else {
+      let argument = input.split(' ')[1];
+      let newFile = {};
+      let updateParent = {};
+      updateParent[currentDirectory] = {
+        ...fileSystem[currentDirectory],
+        children: [...fileSystem[currentDirectory]['children'], nextIndex]
+      }
+      newFile[nextIndex] = {name: argument, parent: currentDirectory, data: ''};
+      this.setState({
+        fileSystem: {...fileSystem, ...newFile, ...updateParent },
+        nextIndex: nextIndex + 1
+      })
+      return `created new file called ${argument}`;
+    }
   }
 
-  echo() {
-    return 'echo';
+  echo(input) {
+    return input.split(' ').slice(1).join(' ');
   }
 
-  cat() {
-    return 'cat';
+  cat(input, currentDirectory, fileSystem) {
+    if (this.inputLength(input) !== 2) {
+      return 'accepts only one argument';
+    }
+    else {
+      let argument = input.split(' ')[1];
+      let findFile = fileSystem[currentDirectory]['children'].findIndex((child) =>
+        fileSystem[child].name === argument
+      )
+      if (findFile >= 0) {
+        return fileSystem[fileSystem[currentDirectory]['children'][findFile]]['data'];
+      }
+      else {
+        return `file not found`;
+      }
+    }
   }
 
   render() {
@@ -177,6 +253,7 @@ class App extends Component {
         <p className="App-intro">
           Welcome to the mini command line app.
         </p>
+        <p>type `help` to see command list</p>
         <Form
           handleChange={this.handleChange}
           handleSubmit={this.handleSubmit}
