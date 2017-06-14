@@ -53,44 +53,16 @@ class App extends Component {
   operateOnInput(input) {
     const command = input.split(' ')[0]
     switch (command) {
-      case 'help':
-        this.setState({
-          output: this.help()
-        })
-        break;
-      case 'cd':
-        this.setState({
-          output: this.cd(input, this.state.currentDirectory, this.state.fileSystem)
-        })
-        break;
-      case 'ls':
-        this.setState({
-          output: this.ls(input, this.state.currentDirectory, this.state.fileSystem)
-        })
-        break;
-      case 'pwd':
-        this.setState({
-          output: this.pwd(input, this.state.currentDirectory, this.state.fileSystem)
-        })
-        break;
-      case 'mkdir':
-        this.setState({
-          output: this.mkdir(input, this.state.nextIndex, this.state.currentDirectory, this.state.fileSystem)
-        })
-        break;
-      case 'touch':
-        this.setState({
-          output: this.touch(input, this.state.nextIndex, this.state.currentDirectory, this.state.fileSystem)
-        })
-        break;
       case 'echo':
-        this.setState(  {
-          output: this.echo(input)
-        })
-        break;
+      case 'help':
+      case 'ls':
+      case 'cd':
+      case 'pwd':
+      case 'mkdir':
+      case 'touch':
       case 'cat':
         this.setState({
-          output: this.cat(input, this.state.currentDirectory, this.state.fileSystem)
+          output: this[command]()
         })
         break;
       default:
@@ -100,16 +72,19 @@ class App extends Component {
     }
   }
 
-  inputLength(input) {
-    return input.split(' ').length
+  inputLength() {
+    return this.state.input.split(' ').length
   }
 
   help() {
     return <Help />
   }
 
-  ls(input, currentDirectory, fileSystem) {
-    if (this.inputLength(input) !== 1) {
+  ls() {
+    const fileSystem = this.state.fileSystem;
+    const currentDirectory = this.state.currentDirectory;
+
+    if (this.inputLength() !== 1) {
       return 'invalid. this ls does not take arguments';
     }
     else {
@@ -127,8 +102,12 @@ class App extends Component {
     }
   }
 
-  cd(input, currentDirectory, fileSystem) {
-    if (this.inputLength(input) === 2) {
+  cd() {
+    const input = this.state.input;
+    const currentDirectory = this.state.currentDirectory;
+    const fileSystem = this.state.fileSystem;
+
+    if (this.inputLength() === 2) {
       if (input.split(' ')[1] === '..') {
         if (fileSystem[currentDirectory]['parent']) {
           this.setState({currentDirectory: fileSystem[currentDirectory]['parent']});
@@ -162,8 +141,11 @@ class App extends Component {
     }
   }
 
-  pwd(input, currentDirectory, fileSystem) {
-    if (this.inputLength(input) === 1) {
+  pwd() {
+    const currentDirectory = this.state.currentDirectory;
+    const fileSystem = this.state.fileSystem;
+
+    if (this.inputLength() === 1) {
       let directoryId = currentDirectory;
       let path = [fileSystem[directoryId]['name']];
       while (fileSystem[directoryId]['parent']) {
@@ -183,8 +165,13 @@ class App extends Component {
     }
   }
 
-  mkdir(input, nextIndex, currentDirectory, fileSystem) {
-    if (this.inputLength(input) !== 2 ) {
+  mkdir() {
+    const input = this.state.input;
+    const nextIndex = this.state.nextIndex;
+    const currentDirectory = this.state.currentDirectory;
+    const fileSystem = this.state.fileSystem;
+
+    if (this.inputLength() !== 2 ) {
       return 'invalid! this mkdir only supports 1 argument.';
     }
     else {
@@ -204,8 +191,12 @@ class App extends Component {
     }
   }
 
-  touch(input, nextIndex, currentDirectory, fileSystem) {
-    if (this.inputLength(input) !== 2 ) {
+  touch() {
+    const input = this.state.input;
+    const nextIndex = this.state.nextIndex;
+    const currentDirectory = this.state.currentDirectory;
+    const fileSystem = this.state.fileSystem;
+    if (this.inputLength() !== 2 ) {
       return 'invalid! this mkdir only supports 1 argument.';
     }
     else {
@@ -225,12 +216,16 @@ class App extends Component {
     }
   }
 
-  echo(input) {
-    return input.split(' ').slice(1).join(' ');
+  echo() {
+    return this.state.input.split(' ').slice(1).join(' ');
   }
 
-  cat(input, currentDirectory, fileSystem) {
-    if (this.inputLength(input) !== 2) {
+  cat() {
+    const input = this.state.input;
+    const currentDirectory = this.state.currentDirectory;
+    const fileSystem = this.state.fileSystem;
+
+    if (this.inputLength() !== 2) {
       return 'accepts only one argument';
     }
     else {

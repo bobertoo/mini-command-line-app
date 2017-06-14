@@ -1,7 +1,10 @@
-.App {
+form.Form > input[type="text"] {
+  /*border: none;*/
+  background: none;
+  color: lime;
+  padding: 10px;
+  font-family: 'Inconsolata', monospace;
+  font-size: 1rem;
+  width: 50%;
   text-align: center;
-}
-
-.App-intro {
-  font-size: large;
 }
